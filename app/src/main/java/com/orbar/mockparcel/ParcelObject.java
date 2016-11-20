@@ -10,18 +10,24 @@ import java.util.Arrays;
  */
 
 public class ParcelObject implements Parcelable {
-    String mString;
     int mInt;
+    byte mByte;
+    boolean mBoolean;
     long mLong;
     float mFloat;
     double mDouble;
-    boolean mBoolean;
+
+    String mString;
 
     Object[] mObjects;
-    boolean[] mBooleans;
-    int[] mInts;
-    long[] mLongs;
 
+    char[] mChars;
+    int[] mInts;
+    byte[] mBytes;
+    boolean[] mBooleans;
+    long[] mLongs;
+    float[] mFloats;
+    double[] mDoubles;
 
     @Override
     public boolean equals(Object o) {
@@ -31,16 +37,21 @@ public class ParcelObject implements Parcelable {
         ParcelObject that = (ParcelObject) o;
 
         if (mInt != that.mInt) return false;
+        if (mByte != that.mByte) return false;
+        if (mBoolean != that.mBoolean) return false;
         if (mLong != that.mLong) return false;
         if (Float.compare(that.mFloat, mFloat) != 0) return false;
         if (Double.compare(that.mDouble, mDouble) != 0) return false;
-        if (mBoolean != that.mBoolean) return false;
         if (!mString.equals(that.mString)) return false;
         // Probably incorrect - comparing Object[] arrays with Arrays.equals
         if (!Arrays.equals(mObjects, that.mObjects)) return false;
-        if (!Arrays.equals(mBooleans, that.mBooleans)) return false;
+        if (!Arrays.equals(mChars, that.mChars)) return false;
         if (!Arrays.equals(mInts, that.mInts)) return false;
-        return Arrays.equals(mLongs, that.mLongs);
+        if (!Arrays.equals(mBytes, that.mBytes)) return false;
+        if (!Arrays.equals(mBooleans, that.mBooleans)) return false;
+        if (!Arrays.equals(mLongs, that.mLongs)) return false;
+        if (!Arrays.equals(mFloats, that.mFloats)) return false;
+        return Arrays.equals(mDoubles, that.mDoubles);
 
     }
 
@@ -48,17 +59,22 @@ public class ParcelObject implements Parcelable {
     public int hashCode() {
         int result;
         long temp;
-        result = mString.hashCode();
-        result = 31 * result + mInt;
+        result = (int) mInt;
+        result = 31 * result + (int) mByte;
+        result = 31 * result + (mBoolean ? 1 : 0);
         result = 31 * result + (int) (mLong ^ (mLong >>> 32));
         result = 31 * result + (mFloat != +0.0f ? Float.floatToIntBits(mFloat) : 0);
         temp = Double.doubleToLongBits(mDouble);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
-        result = 31 * result + (mBoolean ? 1 : 0);
+        result = 31 * result + mString.hashCode();
         result = 31 * result + Arrays.hashCode(mObjects);
-        result = 31 * result + Arrays.hashCode(mBooleans);
+        result = 31 * result + Arrays.hashCode(mChars);
         result = 31 * result + Arrays.hashCode(mInts);
+        result = 31 * result + Arrays.hashCode(mBytes);
+        result = 31 * result + Arrays.hashCode(mBooleans);
         result = 31 * result + Arrays.hashCode(mLongs);
+        result = 31 * result + Arrays.hashCode(mFloats);
+        result = 31 * result + Arrays.hashCode(mDoubles);
         return result;
     }
 
@@ -69,38 +85,50 @@ public class ParcelObject implements Parcelable {
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-        dest.writeString(this.mString);
+
         dest.writeInt(this.mInt);
+        dest.writeByte(this.mByte);
+        dest.writeByte(this.mBoolean ? (byte) 1 : (byte) 0);
         dest.writeLong(this.mLong);
         dest.writeFloat(this.mFloat);
         dest.writeDouble(this.mDouble);
-        dest.writeByte(this.mBoolean ? (byte) 1 : (byte) 0);
+
+        dest.writeString(this.mString);
         dest.writeArray(this.mObjects);
+
+        dest.writeCharArray(mChars);
+        dest.writeByteArray(mBytes);
         dest.writeBooleanArray(this.mBooleans);
         dest.writeIntArray(this.mInts);
         dest.writeLongArray(this.mLongs);
+        dest.writeFloatArray(this.mFloats);
+        dest.writeDoubleArray(this.mDoubles);
     }
 
     public ParcelObject() {
     }
 
     protected ParcelObject(Parcel in) {
-        this.mString = in.readString();
         this.mInt = in.readInt();
+        this.mByte = in.readByte();
+        this.mBoolean = in.readByte() != 0;
         this.mLong = in.readLong();
         this.mFloat = in.readFloat();
         this.mDouble = in.readDouble();
-        this.mBoolean = in.readByte() != 0;
+
+        this.mString = in.readString();
         this.mObjects = in.readArray(Object[].class.getClassLoader());
+
+        this.mChars = in.createCharArray();
+        this.mBytes = in.createByteArray();
         this.mBooleans = in.createBooleanArray();
+//        this.mBooleans = new boolean[2];
 //        in.readBooleanArray(this.mBooleans);
 
         this.mInts = in.createIntArray();
-//        in.readIntArray(this.mInts);
-
         this.mLongs = in.createLongArray();
-//        in.readLongArray(this.mLongs);
-
+        this.mFloats = in.createFloatArray();
+        this.mDoubles = in.createDoubleArray();
     }
 
     public static final Creator<ParcelObject> CREATOR = new Creator<ParcelObject>() {

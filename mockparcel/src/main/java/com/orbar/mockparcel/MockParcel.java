@@ -2,12 +2,17 @@ package com.orbar.mockparcel;
 
 import android.os.Parcel;
 
+import com.orbar.mockparcel.internal.CreateArrayAnswer;
+import com.orbar.mockparcel.internal.MutableInt;
+
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.List;
+
+import com.orbar.mockparcel.internal.ReadArrayAnswer;
+import com.orbar.mockparcel.internal.WriteArrayAnswer;
 
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyByte;
@@ -28,7 +33,7 @@ import static org.mockito.Mockito.when;
 public class MockParcel {
 
     Parcel mockedParcel;
-    int position;
+    MutableInt position;
     List<Object> objects;
 
     public static Parcel obtain() {
@@ -42,6 +47,7 @@ public class MockParcel {
     public MockParcel() {
         mockedParcel = mock(Parcel.class);
         objects = new ArrayList<>();
+        position = new MutableInt(0);
         setupMock();
     }
 
@@ -69,10 +75,13 @@ public class MockParcel {
         doAnswer(writeValueAnswer).when(mockedParcel).writeByte(anyByte());
 
         doAnswer(writeValueAnswer).when(mockedParcel).writeArray(anyCollection().toArray());
-        doAnswer(new WriteIntArrayAnswer()).when(mockedParcel).writeIntArray(any(int[].class));
-        doAnswer(new WriteBooleanArrayAnswer()).when(mockedParcel).writeBooleanArray(any(boolean[].class));
-        doAnswer(new WriteLongArrayAnswer()).when(mockedParcel).writeLongArray(any(long[].class));
-
+        doAnswer(new WriteArrayAnswer(char.class, objects)).when(mockedParcel).writeCharArray(any(char[].class));
+        doAnswer(new WriteArrayAnswer(int.class, objects)).when(mockedParcel).writeIntArray(any(int[].class));
+        doAnswer(new WriteArrayAnswer(byte.class, objects)).when(mockedParcel).writeByteArray(any(byte[].class));
+        doAnswer(new WriteArrayAnswer(boolean.class, objects)).when(mockedParcel).writeBooleanArray(any(boolean[].class));
+        doAnswer(new WriteArrayAnswer(long.class, objects)).when(mockedParcel).writeLongArray(any(long[].class));
+        doAnswer(new WriteArrayAnswer(float.class, objects)).when(mockedParcel).writeFloatArray(any(float[].class));
+        doAnswer(new WriteArrayAnswer(double.class, objects)).when(mockedParcel).writeDoubleArray(any(double[].class));
     }
 
 
@@ -80,50 +89,53 @@ public class MockParcel {
         when(mockedParcel.readString()).thenAnswer(new Answer<String>() {
             @Override
             public String answer(final InvocationOnMock invocation) throws Throwable {
-                return (String) objects.get(position++);
+                return (String) objects.get(position.value++);
             }
         });
         when(mockedParcel.readInt()).thenAnswer(new Answer<Integer>() {
             @Override
             public Integer answer(final InvocationOnMock invocation) throws Throwable {
-                return (Integer) objects.get(position++);
+                return (Integer) objects.get(position.value++);
             }
         });
         when(mockedParcel.readLong()).thenAnswer(new Answer<Long>() {
             @Override
             public Long answer(final InvocationOnMock invocation) throws Throwable {
-                return (Long) objects.get(position++);
+                return (Long) objects.get(position.value++);
             }
         });
         when(mockedParcel.readFloat()).thenAnswer(new Answer<Float>() {
             @Override
             public Float answer(final InvocationOnMock invocation) throws Throwable {
-                return (Float) objects.get(position++);
+                return (Float) objects.get(position.value++);
             }
         });
         when(mockedParcel.readDouble()).thenAnswer(new Answer<Double>() {
             @Override
             public Double answer(final InvocationOnMock invocation) throws Throwable {
-                return (Double) objects.get(position++);
+                return (Double) objects.get(position.value++);
             }
         });
         when(mockedParcel.readByte()).thenAnswer(new Answer<Byte>() {
             @Override
             public Byte answer(final InvocationOnMock invocation) throws Throwable {
-                return (Byte) objects.get(position++);
+                return (Byte) objects.get(position.value++);
             }
         });
         when(mockedParcel.readArray(Object[].class.getClassLoader())).thenAnswer(new Answer<Object[]>() {
             @Override
             public Object[] answer(final InvocationOnMock invocation) throws Throwable {
-                return (Object[]) objects.get(position++);
+                return (Object[]) objects.get(position.value++);
             }
         });
 
-        doAnswer(new ReadBooleanArray()).when(mockedParcel).readBooleanArray(any(boolean[].class));
-        doAnswer(new ReadIntArray()).when(mockedParcel).readIntArray(any(int[].class));
-        doAnswer(new ReadLongArray()).when(mockedParcel).readLongArray(any(long[].class));
-
+        doAnswer(new ReadArrayAnswer(char.class, objects, position)).when(mockedParcel).readCharArray(any(char[].class));
+        doAnswer(new ReadArrayAnswer(int.class, objects, position)).when(mockedParcel).readIntArray(any(int[].class));
+        doAnswer(new ReadArrayAnswer(byte.class, objects, position)).when(mockedParcel).readByteArray(any(byte[].class));
+        doAnswer(new ReadArrayAnswer(boolean.class, objects, position)).when(mockedParcel).readBooleanArray(any(boolean[].class));
+        doAnswer(new ReadArrayAnswer(long.class, objects, position)).when(mockedParcel).readLongArray(any(long[].class));
+        doAnswer(new ReadArrayAnswer(float.class, objects, position)).when(mockedParcel).readFloatArray(any(float[].class));
+        doAnswer(new ReadArrayAnswer(double.class, objects, position)).when(mockedParcel).readDoubleArray(any(double[].class));
     }
 
 
@@ -131,174 +143,18 @@ public class MockParcel {
         doAnswer(new Answer<Void>() {
             @Override
             public Void answer(final InvocationOnMock invocation) throws Throwable {
-                position = ((Integer) invocation.getArguments()[0]);
+                position.value = ((Integer) invocation.getArguments()[0]);
                 return null;
             }
         }).when(mockedParcel).setDataPosition(anyInt());
 
-        when(mockedParcel.createBooleanArray()).thenAnswer(new CreateBooleanArrayAnswer());
-        when(mockedParcel.createIntArray()).thenAnswer(new CreateIntArrayAnswer());
-        when(mockedParcel.createLongArray()).thenAnswer(new CreateLongArrayAnswer());
+        when(mockedParcel.createCharArray()).thenAnswer(new CreateArrayAnswer(char.class, objects, position));
+        when(mockedParcel.createIntArray()).thenAnswer(new CreateArrayAnswer(int.class, objects, position));
+        when(mockedParcel.createByteArray()).thenAnswer(new CreateArrayAnswer(byte.class, objects, position));
+        when(mockedParcel.createBooleanArray()).thenAnswer(new CreateArrayAnswer(boolean.class, objects, position));
+        when(mockedParcel.createLongArray()).thenAnswer(new CreateArrayAnswer(long.class, objects, position));
+        when(mockedParcel.createFloatArray()).thenAnswer(new CreateArrayAnswer(float.class, objects, position));
+        when(mockedParcel.createDoubleArray()).thenAnswer(new CreateArrayAnswer(double.class, objects, position));
 
-    }
-
-    private class WriteBooleanArrayAnswer implements Answer<boolean[]> {
-        @Override
-        public boolean[] answer(InvocationOnMock invocation) throws Throwable {
-            boolean[] parameter = invocation.getArgumentAt(0, boolean[].class);
-            if (parameter != null) {
-                objects.add(parameter.length);
-                objects.add(parameter);
-            } else {
-                objects.add(-1);
-            }
-            return null;
-        }
-    }
-
-    private class CreateBooleanArrayAnswer implements Answer<boolean[]> {
-        @Override
-        public boolean[] answer(InvocationOnMock invocation) throws Throwable {
-            if (objects.size() > position) {
-                int count = (int) objects.get(position++);
-                if (count >= 0) {
-                    boolean[] array = new boolean[count];
-                    System.arraycopy(objects.get(position++), 0, array, 0, count);
-                    return array;
-                }
-            }
-            return null;
-        }
-    }
-
-    private class ReadBooleanArray implements Answer<boolean[]> {
-        @Override
-        public boolean[] answer(InvocationOnMock invocation) throws Throwable {
-            if (objects.size() > position) {
-                boolean[] val = invocation.getArgumentAt(0, boolean[].class);
-                int count = (int) objects.get(position++);
-                if (count == val.length) {
-                    boolean[] intArray = (boolean[]) objects.get(position++);
-                    System.arraycopy(intArray, 0, val, 0, count);
-                    return intArray;
-                } else {
-                    throw new RuntimeException("bad array lengths");
-                }
-            }
-            return null;
-        }
-    }
-
-    private class WriteIntArrayAnswer implements Answer<int[]> {
-        @Override
-        public int[] answer(InvocationOnMock invocation) throws Throwable {
-            int[] val = invocation.getArgumentAt(0, int[].class);
-            if (val != null) {
-                objects.add(val.length);
-                objects.add(val);
-            } else {
-                objects.add(-1);
-            }
-            return null;
-        }
-    }
-
-    private class CreateIntArrayAnswer implements Answer<int[]> {
-        @Override
-        public int[] answer(InvocationOnMock invocation) throws Throwable {
-            if (objects.size() > position) {
-                int count = (int) objects.get(position++);
-                if (count >= 0) {
-                    int[] array = new int[count];
-                    System.arraycopy(objects.get(position++), 0, array, 0, count);
-                    return array;
-                }
-            }
-            return null;
-        }
-    }
-
-    private class ReadIntArray implements Answer<int[]> {
-        @Override
-        public int[] answer(InvocationOnMock invocation) throws Throwable {
-            if (objects.size() > position) {
-                int[] val = invocation.getArgumentAt(0, int[].class);
-                int count = (int) objects.get(position++);
-                if (count == val.length) {
-                    int[] intArray = (int[]) objects.get(position++);
-                    System.arraycopy(intArray, 0, val, 0, count);
-                    return intArray;
-                } else {
-                    throw new RuntimeException("bad array lengths");
-                }
-            }
-            return null;
-        }
-    }
-
-    private class WriteLongArrayAnswer implements Answer<long[]> {
-        @Override
-        public long[] answer(InvocationOnMock invocation) throws Throwable {
-            long[] parameter = invocation.getArgumentAt(0, long[].class);
-            if (parameter != null) {
-                objects.add(parameter.length);
-                objects.add(parameter);
-            } else {
-                objects.add(-1);
-            }
-            return null;
-        }
-    }
-
-    private class CreateLongArrayAnswer implements Answer<long[]> {
-        @Override
-        public long[] answer(InvocationOnMock invocation) throws Throwable {
-            if (objects.size() > position) {
-                int count = (int) objects.get(position++);
-                if (count >= 0) {
-                    long[] array = new long[count];
-                    System.arraycopy(objects.get(position++), 0, array, 0, count);
-                    return array;
-                }
-            }
-            return null;
-        }
-    }
-
-    private class ReadLongArray implements Answer<long[]> {
-        @Override
-        public long[] answer(InvocationOnMock invocation) throws Throwable {
-            if (objects.size() > position) {
-                long[] val = invocation.getArgumentAt(0, long[].class);
-                int count = (int) objects.get(position++);
-                if (count == val.length) {
-                    long[] intArray = (long[]) objects.get(position++);
-                    System.arraycopy(intArray, 0, val, 0, count);
-                    return intArray;
-                } else {
-                    throw new RuntimeException("bad array lengths");
-                }
-            }
-            return null;
-        }
-    }
-
-    // TODO: 11/13/16 figure out how to generify this
-    private class WriteArrayAnswer< U> implements Answer {
-
-        private Class<U> uClass;
-
-        public WriteArrayAnswer(Class<U> uClass) {
-            this.uClass = uClass;
-        }
-
-        @Override
-        public Object answer(InvocationOnMock invocation) throws Throwable {
-            Object parameter = invocation.getArgumentAt(0, Array.newInstance(uClass, 0).getClass());
-
-            objects.add(uClass.getClasses().length);
-            objects.add(parameter);
-            return null;
-        }
     }
 }

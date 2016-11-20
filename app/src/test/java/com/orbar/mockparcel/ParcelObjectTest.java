@@ -19,16 +19,24 @@ public class ParcelObjectTest {
     public void setup() {
         parcelObject = new ParcelObject();
 
-        parcelObject.mString = "string";
         parcelObject.mInt = 1;
+        parcelObject.mByte = 1;
+        parcelObject.mBoolean = true;
         parcelObject.mLong = 2L;
         parcelObject.mFloat = 3.0f;
         parcelObject.mDouble = 4.0d;
-        parcelObject.mBoolean = true;
+
+        parcelObject.mString = "string";
         parcelObject.mObjects = new Object[]{"String", Integer.MAX_VALUE};
-        parcelObject.mBooleans = new boolean[]{true, false};
+
+        parcelObject.mChars = new char[]{'a', 'b', 'c'};
         parcelObject.mInts = new int[]{0, 1, 2};
+        parcelObject.mBytes = new byte[]{1, 2, 7};
+        parcelObject.mBooleans = new boolean[]{true, false};
         parcelObject.mLongs = new long[] {1l, 2l, 3l};
+        parcelObject.mFloats = new float[] {-1f, 2.0f, 3.5f};
+        parcelObject.mDoubles = new double[] {-1d, 2.0d, 3.7d};
+
     }
 
     @Test
